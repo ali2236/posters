@@ -57,14 +57,13 @@ public class Main {
         SegmentTree tree = new SegmentTree(ys);
         int lastX = events[0].getPoint();
         int area = 0;
-        int parameter = 0;
+        int parameter;
 
         for (Event event : events) {
             int currentX = event.getPoint();
             int dx = currentX - lastX;
 
             int y = tree.getSum();
-            int gaps = tree.getGaps();
 
             Rect r = event.rect;
             if (event.end) {
@@ -74,16 +73,16 @@ public class Main {
             }
 
             area += y * dx;
-            parameter += (dx * 2) * (1 + gaps);
 
             lastX = currentX;
         }
-
+        parameter = tree.getD();
         ////////////////////////////////////////
+
+        // get the rest of parameter
 
 
         ///////////////////////////////////////
-
         System.out.println("area = " + area);
         System.out.println("parameter = " + parameter);
     }
@@ -123,16 +122,22 @@ class Event {
 
 class Node {
     final int min, max;
-    int count = 0;
+    private int count = 0;
     int sum = 0;
-    int gaps = 0;
-
 
     Node parent, left, right;
 
     Node(int min, int max) {
         this.min = min;
         this.max = max;
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    public void incrementCount(int i) {
+        this.count += i;
     }
 
     boolean active() {
@@ -151,13 +156,10 @@ class Node {
     public void updateSum() {
         if (active()){
             sum = max - min;
-            gaps = 0;
         } else if (!leaf()){
             sum = left.sum + right.sum;
-            //gaps = ??;
         } else {
             sum = 0;
-            gaps = 0;
         }
     }
 }
@@ -192,11 +194,18 @@ class SegmentTree {
         _edit(root, min, max, -1);
     }
 
+    int d = 0;
+
+    public int getD() {
+        return d;
+    }
+
     private void _edit(Node r, int min, int max, int c) {
         if (max <= r.min) return;
         if (r.min == min && r.max == max) {
-            r.count += c;
+            r.incrementCount(c);
             r.updateSum();
+            d += r.sum;
             _update(r.parent);
         } else {
             if (min >= r.left.max) {
@@ -219,10 +228,6 @@ class SegmentTree {
 
     int getSum() {
         return root.sum;
-    }
-
-    int getGaps() {
-        return root.gaps;
     }
 
     private int[] purgeArray(int[] arr) {
