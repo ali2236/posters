@@ -39,8 +39,8 @@ public class Main {
         events = new Event[n * 2];
         int i = 0;
         for (Rect rect : rects) {
-            events[i++] = new Event(false, rect,EventType.x);
-            events[i++] = new Event(true, rect,EventType.x);
+            events[i++] = new Event(false, rect, EventType.x);
+            events[i++] = new Event(true, rect, EventType.x);
         }
 
         Arrays.sort(events, Event::compare);
@@ -135,13 +135,30 @@ class Node {
         this.max = max;
     }
 
-    boolean active(){
+    boolean active() {
         return count > 0;
+    }
+
+    boolean leaf(){
+        return left==null && right==null;
     }
 
     @Override
     public String toString() {
         return String.format("(%d, %d)", min, max);
+    }
+
+    public void updateSum() {
+        if (active()){
+            sum = max - min;
+            gaps = 0;
+        } else if (!leaf()){
+            sum = left.sum + right.sum;
+            //gaps = ??;
+        } else {
+            sum = 0;
+            gaps = 0;
+        }
     }
 }
 
@@ -178,12 +195,9 @@ class SegmentTree {
     private void _edit(Node r, int min, int max, int c) {
         if (max <= r.min) return;
         if (r.min == min && r.max == max) {
-            if (r.right!=null && r.left!=null){
-                _edit(r.right,r.right.min,r.right.max,c);
-                _edit(r.left,r.left.min,r.left.max,c);
-            } else {
-                r.count += c;
-            }
+            r.count += c;
+            r.updateSum();
+            _update(r.parent);
         } else {
             if (min >= r.left.max) {
                 _edit(r.right, min, max, c);
@@ -196,23 +210,19 @@ class SegmentTree {
         }
     }
 
+    private void _update(Node p){
+        if (p==null) return;
+        p.updateSum();
+        _update(p.parent);
+    }
+
+
     int getSum() {
-        return _getSum(root);
+        return root.sum;
     }
 
     int getGaps() {
         return root.gaps;
-    }
-
-    private int _getSum(Node r){
-        if (r==null) return 0;
-         if (r.active()){
-             return r.max - r.min;
-         } else if(r.left!=null) {
-             return _getSum(r.left) + _getSum(r.right);
-         } else {
-             return 0;
-         }
     }
 
     private int[] purgeArray(int[] arr) {
