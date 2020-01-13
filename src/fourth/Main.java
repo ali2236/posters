@@ -1,5 +1,6 @@
 package fourth;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -11,19 +12,9 @@ public class Main {
     static boolean[] active;
     static Event[] events;
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
 
-        long start = System.currentTimeMillis();
-
-        //Scanner scanner = new Scanner(new File("tests/test.txt"));
-        Scanner scanner = new Scanner("7\n" +
-                "-10 -1 0 4\n" +
-                "-2 -5 5 0\n" +
-                "4 -8 6 11\n" +
-                "-5 2 8 9\n" +
-                "1 6 3 8\n" +
-                "10 0 12 6\n" +
-                "12 -4 14 2\n");
+        Scanner scanner = new Scanner(System.in);
 
         int n = scanner.nextInt();
 
@@ -81,9 +72,8 @@ public class Main {
             lastPoint = currentX;
         }
         parameter += tree.getD();
-        ////////////////////////////////////////
 
-        // get the rest of parameter
+        /////////////////////////////////////
 
         for (Event event : events) {
             event.type = EventType.y;
@@ -111,10 +101,9 @@ public class Main {
         }
         parameter += tree.getD();
 
-        ///////////////////////////////////////
+
         System.out.println(area);
         System.out.println(parameter);
-        System.out.println(System.currentTimeMillis() - start);
     }
 
 }
@@ -152,7 +141,7 @@ class Event {
 
 class Node {
     final int a, b;
-    private int count = 0;
+    int count = 0;
     int sum = 0;
 
     Node parent, left, right;
@@ -160,14 +149,6 @@ class Node {
     Node(int a, int b) {
         this.a = a;
         this.b = b;
-    }
-
-    public int getCount() {
-        return count;
-    }
-
-    public int incrementCount(int i) {
-        return this.count += i;
     }
 
     boolean active() {
@@ -233,26 +214,14 @@ class SegmentTree {
     private void _edit(Node r, int min, int max, int c) {
         if (max <= r.a) return;
         if (r.a == min && r.b == max) {
-            if (r.leaf()){
-            int before = r.getCount();
-            int after = r.incrementCount(c);
-
-            r.updateSum();
-            _update(r.parent);
-
-            if (before==0 || after==0){
-                d += r.b - r.a;
-            }
-            } else {
-                _edit(r.left, r.left.a, r.left.b, c);
-                _edit(r.right, r.right.a, r.right.b, c);
-            }
+            r.count += c;
+            _update(r);
         } else {
             if (min >= r.left.b) {
                 _edit(r.right, min, max, c);
             } else if (max <= r.left.b) {
                 _edit(r.left, min, max, c);
-            } else {
+            } else { // fork
                 _edit(r.left, min, r.left.b, c);
                 _edit(r.right, r.right.a, max, c);
             }
@@ -260,9 +229,16 @@ class SegmentTree {
     }
 
     private void _update(Node p) {
-        if (p == null) return;
-        p.updateSum();
-        _update(p.parent);
+        if (p == root) {
+            int oldSum = p.sum;
+            p.updateSum();
+            int newSum = p.sum;
+            int dt = Math.abs(oldSum - newSum);
+            d += dt;
+        } else {
+            p.updateSum();
+            _update(p.parent);
+        }
     }
 
 

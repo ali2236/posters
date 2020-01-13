@@ -2,10 +2,10 @@ import 'dart:io';
 import 'dart:math';
 
 Random r = Random();
-int b = 1000;
+int b = 100000;
 
 void main(List<String> args) async {
-  int count = 100;
+  int count = 10000;
 
   List<Rect> rects = List.generate(count, (i) {
     var x2 = r.nextInt(b);
