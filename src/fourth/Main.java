@@ -11,7 +11,11 @@ public class Main {
     static boolean[] active;
     static Event[] events;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+
+        long start = System.currentTimeMillis();
+
+        //Scanner scanner = new Scanner(new File("tests/test.txt"));
         Scanner scanner = new Scanner("7\n" +
                 "-10 -1 0 4\n" +
                 "-2 -5 5 0\n" +
@@ -110,6 +114,7 @@ public class Main {
         ///////////////////////////////////////
         System.out.println(area);
         System.out.println(parameter);
+        System.out.println(System.currentTimeMillis() - start);
     }
 
 }
@@ -146,15 +151,15 @@ class Event {
 }
 
 class Node {
-    final int min, max;
+    final int a, b;
     private int count = 0;
     int sum = 0;
 
     Node parent, left, right;
 
-    Node(int min, int max) {
-        this.min = min;
-        this.max = max;
+    Node(int a, int b) {
+        this.a = a;
+        this.b = b;
     }
 
     public int getCount() {
@@ -175,12 +180,12 @@ class Node {
 
     @Override
     public String toString() {
-        return String.format("(%d, %d)", min, max);
+        return String.format("(%d, %d)", a, b);
     }
 
     public void updateSum() {
         if (active()) {
-            sum = max - min;
+            sum = b - a;
         } else if (!leaf()) {
             sum = left.sum + right.sum;
         } else {
@@ -226,8 +231,8 @@ class SegmentTree {
     }
 
     private void _edit(Node r, int min, int max, int c) {
-        if (max <= r.min) return;
-        if (r.min == min && r.max == max) {
+        if (max <= r.a) return;
+        if (r.a == min && r.b == max) {
             if (r.leaf()){
             int before = r.getCount();
             int after = r.incrementCount(c);
@@ -236,20 +241,20 @@ class SegmentTree {
             _update(r.parent);
 
             if (before==0 || after==0){
-                d += r.max - r.min;
+                d += r.b - r.a;
             }
             } else {
-                _edit(r.left, r.left.min, r.left.max, c);
-                _edit(r.right, r.right.min, r.right.max, c);
+                _edit(r.left, r.left.a, r.left.b, c);
+                _edit(r.right, r.right.a, r.right.b, c);
             }
         } else {
-            if (min >= r.left.max) {
+            if (min >= r.left.b) {
                 _edit(r.right, min, max, c);
-            } else if (max <= r.left.max) {
+            } else if (max <= r.left.b) {
                 _edit(r.left, min, max, c);
             } else {
-                _edit(r.left, min, r.left.max, c);
-                _edit(r.right, r.right.min, max, c);
+                _edit(r.left, min, r.left.b, c);
+                _edit(r.right, r.right.a, max, c);
             }
         }
     }

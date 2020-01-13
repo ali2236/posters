@@ -1,20 +1,19 @@
 package first;
 
-import java.util.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
 
 public class Main {
 
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner("7\n" +
-                "-10 -1 0 4\n" +
-                "-2 -5 5 0\n" +
-                "4 -8 6 11\n" +
-                "-5 2 8 9\n" +
-                "1 6 3 8\n" +
-                "10 0 12 6\n" +
-                "12 -4 14 2\n");
+    public static void main(String[] args) throws Exception{
 
-        int n = scanner.nextInt();
+        long start = System.currentTimeMillis();
+
+        Scanner scanner = new Scanner(new File("tests/test.txt"));
+
+        int n = Integer.valueOf(scanner.next());
 
         Rect[] rects = new Rect[n];
 
@@ -60,16 +59,17 @@ public class Main {
 
         for (Rect rect : rects) {
             area += rect.getArea();
-            perimeter += (rect.y2 - rect.y1) * 2;//rect.getPerimeter();
+            perimeter += rect.getPerimeter();
         }
 
         for (Rect rect : intersections) {
             area -= rect.getArea();
-            perimeter -= (rect.y2 - rect.y1) * 2;//rect.getPerimeter();
+            perimeter -= rect.getPerimeter();
         }
 
-        System.out.println("area = " + area);
-        System.out.println("perimeter = " + perimeter);
+        System.out.println(area);
+        System.out.println(perimeter);
+        System.out.println(System.currentTimeMillis() - start);
     }
 
 }
