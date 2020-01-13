@@ -45,23 +45,23 @@ public class Main {
 
         Arrays.sort(events, Event::compare);
 
-        int[] ys = new int[2 * n];
+        int[] intervals = new int[2 * n];
         i = 0;
         for (Rect rect : rects) {
-            ys[i++] = rect.y1;
-            ys[i++] = rect.y2;
+            intervals[i++] = rect.y1;
+            intervals[i++] = rect.y2;
         }
 
-        Arrays.sort(ys);
+        Arrays.sort(intervals);
 
-        SegmentTree tree = new SegmentTree(ys);
-        int lastX = events[0].getPoint();
+        SegmentTree tree = new SegmentTree(intervals);
+        int lastPoint = events[0].getPoint();
         int area = 0;
-        int parameter;
+        int parameter = 0;
 
         for (Event event : events) {
             int currentX = event.getPoint();
-            int dx = currentX - lastX;
+            int dx = currentX - lastPoint;
 
             int y = tree.getSum();
 
@@ -74,17 +74,42 @@ public class Main {
 
             area += y * dx;
 
-            lastX = currentX;
+            lastPoint = currentX;
         }
-        parameter = tree.getD();
+        parameter += tree.getD();
         ////////////////////////////////////////
 
         // get the rest of parameter
 
+        for (Event event : events) {
+            event.type = EventType.y;
+        }
+
+        Arrays.sort(events, Event::compare);
+
+        i = 0;
+        for (Rect rect : rects) {
+            intervals[i++] = rect.x1;
+            intervals[i++] = rect.x2;
+        }
+
+        Arrays.sort(intervals);
+
+        tree = new SegmentTree(intervals);
+
+        for (Event event : events) {
+            Rect r = event.rect;
+            if (event.end) {
+                tree.delete(r.x1, r.x2);
+            } else {
+                tree.insert(r.x1, r.x2);
+            }
+        }
+        parameter += tree.getD();
 
         ///////////////////////////////////////
-        System.out.println("area = " + area);
-        System.out.println("parameter = " + parameter);
+        System.out.println(area);
+        System.out.println(parameter);
     }
 
 }
@@ -136,16 +161,16 @@ class Node {
         return count;
     }
 
-    public void incrementCount(int i) {
-        this.count += i;
+    public int incrementCount(int i) {
+        return this.count += i;
     }
 
     boolean active() {
         return count > 0;
     }
 
-    boolean leaf(){
-        return left==null && right==null;
+    boolean leaf() {
+        return left == null && right == null;
     }
 
     @Override
@@ -154,9 +179,9 @@ class Node {
     }
 
     public void updateSum() {
-        if (active()){
+        if (active()) {
             sum = max - min;
-        } else if (!leaf()){
+        } else if (!leaf()) {
             sum = left.sum + right.sum;
         } else {
             sum = 0;
@@ -194,7 +219,7 @@ class SegmentTree {
         _edit(root, min, max, -1);
     }
 
-    int d = 0;
+    private int d = 0;
 
     public int getD() {
         return d;
@@ -203,10 +228,20 @@ class SegmentTree {
     private void _edit(Node r, int min, int max, int c) {
         if (max <= r.min) return;
         if (r.min == min && r.max == max) {
-            r.incrementCount(c);
+            if (r.leaf()){
+            int before = r.getCount();
+            int after = r.incrementCount(c);
+
             r.updateSum();
-            d += r.sum;
             _update(r.parent);
+
+            if (before==0 || after==0){
+                d += r.max - r.min;
+            }
+            } else {
+                _edit(r.left, r.left.min, r.left.max, c);
+                _edit(r.right, r.right.min, r.right.max, c);
+            }
         } else {
             if (min >= r.left.max) {
                 _edit(r.right, min, max, c);
@@ -219,8 +254,8 @@ class SegmentTree {
         }
     }
 
-    private void _update(Node p){
-        if (p==null) return;
+    private void _update(Node p) {
+        if (p == null) return;
         p.updateSum();
         _update(p.parent);
     }
