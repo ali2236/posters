@@ -1,10 +1,6 @@
 package fourth;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class Main {
 
@@ -14,21 +10,20 @@ public class Main {
 
     public static void main(String[] args) {
 
-        Scanner scanner = new Scanner(System.in);
+        long start = System.currentTimeMillis();
+
+        Scanner scanner = new Scanner("100000"/*System.in*/);
 
         int n = scanner.nextInt();
-
         rects = new Rect[n];
         active = new boolean[n];
 
+        Random rnd = new Random();
         for (int i = 0; i < n; i++) {
-            rects[i] = new Rect(
-                    i,
-                    scanner.nextInt(),
-                    scanner.nextInt(),
-                    scanner.nextInt(),
-                    scanner.nextInt()
-            );
+            //rects[i] = new Rect(i, scanner.nextInt(), scanner.nextInt(), scanner.nextInt(), scanner.nextInt());
+
+            //rects[i] = new Rect(i, -100,-100, 100, 100);
+            rects[i] = new Rect(i, -100,-100,rnd.nextInt(1<<15),rnd.nextInt(1<<15));
         }
 
         events = new Event[n * 2];
@@ -37,7 +32,6 @@ public class Main {
             events[i++] = new Event(false, rect, EventType.x);
             events[i++] = new Event(true, rect, EventType.x);
         }
-
         Arrays.sort(events, Event::compare);
 
         int[] intervals = new int[2 * n];
@@ -57,7 +51,6 @@ public class Main {
         for (Event event : events) {
             int currentX = event.getPoint();
             int dx = currentX - lastPoint;
-
             int y = tree.getSum();
 
             Rect r = event.rect;
@@ -68,12 +61,9 @@ public class Main {
             }
 
             area += y * dx;
-
             lastPoint = currentX;
         }
-        parameter += tree.getD();
-
-        /////////////////////////////////////
+        parameter += tree.d;
 
         for (Event event : events) {
             event.type = EventType.y;
@@ -90,7 +80,6 @@ public class Main {
         Arrays.sort(intervals);
 
         tree = new SegmentTree(intervals);
-
         for (Event event : events) {
             Rect r = event.rect;
             if (event.end) {
@@ -99,11 +88,12 @@ public class Main {
                 tree.insert(r.x1, r.x2);
             }
         }
-        parameter += tree.getD();
-
+        parameter += tree.d;
 
         System.out.println(area);
         System.out.println(parameter);
+
+        System.out.println(System.currentTimeMillis() - start + " ms");
     }
 
 }
@@ -141,9 +131,7 @@ class Event {
 
 class Node {
     final int a, b;
-    int count = 0;
-    int sum = 0;
-
+    int count = 0, sum = 0;
     Node parent, left, right;
 
     Node(int a, int b) {
@@ -159,11 +147,6 @@ class Node {
         return left == null && right == null;
     }
 
-    @Override
-    public String toString() {
-        return String.format("(%d, %d)", a, b);
-    }
-
     public void updateSum() {
         if (active()) {
             sum = b - a;
@@ -177,6 +160,7 @@ class Node {
 
 class SegmentTree {
     private Node root;
+    int d = 0;
 
     public SegmentTree(int[] intervals) {
         intervals = purgeArray(intervals);
@@ -203,12 +187,6 @@ class SegmentTree {
 
     void delete(int min, int max) {
         _edit(root, min, max, -1);
-    }
-
-    private int d = 0;
-
-    public int getD() {
-        return d;
     }
 
     private void _edit(Node r, int min, int max, int c) {
@@ -264,16 +242,10 @@ class SegmentTree {
 
         return array;
     }
-
-    @Override
-    public String toString() {
-        return root.toString();
-    }
 }
 
 class Rect {
-    final int index;
-    final int x1, y1, x2, y2;
+    final int index, x1, y1, x2, y2;
 
     Rect(int index, int x1, int y1, int x2, int y2) {
         this.index = index;
@@ -281,10 +253,5 @@ class Rect {
         this.y1 = y1;
         this.x2 = x2;
         this.y2 = y2;
-    }
-
-    @Override
-    public String toString() {
-        return String.format("[%d, %d, %d, %d]", x1, y1, x2, y2);
     }
 }
